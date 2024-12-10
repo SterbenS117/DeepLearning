@@ -17,13 +17,16 @@ if gpus:
         print(e)
 
 # Load or distribute your data here
-home = r'E:\BigRun'
-train_file = '/mnt/e/BigRun/BigRunWS_V5_TS_500_train_part_1.csv'
-test_file = '/mnt/e/BigRun/BigRunWS_V5_TS_500_test_part_1.csv'
+#home = r'E:\BigRun'
+train_file = '/mnt/e/BigRun/train/BigRunWS_V5_T_500_train_part_1.csv'
+test_file = '/mnt/e/BigRun/test/BigRunWS_V5_T_500_test_part_1.csv'
 
 train_data_full = pd.read_csv(train_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp'], engine='pyarrow')
 test_data_full = pd.read_csv(test_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp', 'AHRR'], engine='pyarrow')
-
+ahrr = test_data_full['AHRR']
+smerge = test_data_full['Smerge']
+date = test_data_full['Date']
+pagename = test_data_full['PageName']
 train_data = train_data_full[['Clay', 'Sand', 'Silt', 'Elevation', 'Aspect', 'Slope', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp']].dropna()
 test_data = test_data_full[['Clay', 'Sand', 'Silt', 'Elevation', 'Aspect', 'Slope', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp']].dropna()
 
@@ -83,4 +86,8 @@ pred = model.predict(test_dataset)
 
 # Save predictions
 test_data['ML_'] = pred
+test_data['AHRR'] = ahrr
+test_data['SMERGE'] = smerge
+test_data['Date'] = date
+test_data['PageName'] = pagename
 test_data.to_csv("/mnt/e/BigRun/TFDL_BigRunWS_V5_TS_500.csv", index=False)
