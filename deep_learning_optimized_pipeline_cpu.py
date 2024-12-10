@@ -5,21 +5,23 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 
-# Enable GPU configuration
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-        tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
-        print(f"Using GPU: {gpus[0]}")
-    except RuntimeError as e:
-        print(e)
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+print("Running on CPU")
+# # Enable GPU configuration
+#cpus = tf.config.experimental.list_physical_devices('CPU')
+# if cpus:
+#     try:
+#         for cpu in cpus:
+#             tf.config.experimental.set_memory_growth(cpu, True)
+#             tf.config.experimental.set_visible_devices(cpus[0], 'CPU')
+#         print(f"Using GPU: {cpus[0]}")
+#     except RuntimeError as e:
+#         print(e)
 
 # Load or distribute your data here
 #home = r'E:\BigRun'
-train_file = '/mnt/e/BigRun/BigRunWS_V5_T_500_train_main.csv'
-test_file = '/mnt/e/BigRun/BigRunWS_V5_T_500_test_main.csv'
+train_file = '/mnt/e/BigRun/train/BigRunWS_V5_T_500_train_part_2.csv'
+test_file = '/mnt/e/BigRun/test/BigRunWS_V5_T_500_test_part_2.csv'
 
 train_data_full = pd.read_csv(train_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp'], engine='pyarrow')
 test_data_full = pd.read_csv(test_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp', 'AHRR'], engine='pyarrow')
@@ -90,4 +92,4 @@ test_data['AHRR'] = ahrr
 test_data['SMERGE'] = smerge
 test_data['Date'] = date
 test_data['PageName'] = pagename
-test_data.to_csv("/mnt/e/BigRun/TFDL_BigRunWS_V5_TS_500.csv", index=False)
+test_data.to_csv("/mnt/e/BigRun/TFDL_BigRunWS_V5_TS_500_part_2.csv", index=False)
