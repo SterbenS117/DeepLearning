@@ -4,7 +4,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="3.10 @ Ubuntu-22.04" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.10.12 WSL (Ubuntu-22.04): (/root/.virtualenvs/Deep_Learning2025/bin/python) (2)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

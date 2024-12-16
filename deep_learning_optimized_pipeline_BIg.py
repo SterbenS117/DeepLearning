@@ -63,14 +63,14 @@ def dl_function(train, test):
     train_dataset = (train_dataset
                      .shuffle(buffer_size=10000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(64)
+                     .batch(256)
                      .cache()  # Cache to memory to alleviate CPU bottlenecks
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(64)
+                    .batch(256)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 
@@ -92,6 +92,7 @@ def dl_function(train, test):
 
     # Predict on the test dataset
     pred = model.predict(test_dataset)
+    del model
     return pred
 
 
@@ -114,19 +115,21 @@ test_data = test_data_full[['Clay', 'Sand', 'Silt', 'Elevation', 'Aspect', 'Slop
 test_data['Date'] = pd.to_datetime(test_data['Date'], format="%Y-%m-%d").astype(int)
 train_data['Date'] = pd.to_datetime(train_data['Date'], format="%Y-%m-%d").astype(int)
 
-test_list = divide_dataframe(test_data, 6)
-train_list = divide_dataframe(train_data, 6)
+test_list = divide_dataframe(test_data, 8)
+train_list = divide_dataframe(train_data, 8)
 
-pred = pd.DataFrame(columns=['ML_'])
+del train_data
+
+pred_out = pd.DataFrame(columns=['ML_'])
 for i in range(6):
     j = dl_function(train_list[i], test_list[i])
     new_row = pd.DataFrame({'ML_': [j]})
-    pred = pd.concat([pred, new_row], ignore_index=True)
+    pred_out = pd.concat([pred_out, new_row], ignore_index=True)
 
 # Save predictions
-test_data['ML_'] = pred['ML_']
+test_data['ML_'] = pred_out['ML_']
 test_data['AHRR'] = ahrr
 test_data['SMERGE'] = smerge
 test_data['Date'] = date
 test_data['PageName'] = pagename
-test_data.to_csv("/mnt/e/BigRun/TFDL_BigRunWS_V5_TS_500.csv", index=False)
+test_data.to_csv("/mnt/e/BigRun/TFDL_BigRunWS_V5_T_500.csv", index=False)
