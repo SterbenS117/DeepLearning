@@ -37,14 +37,14 @@ def dl_function(train, test):
     train_dataset = (train_dataset
                      .shuffle(buffer_size=10000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(256)
+                     .batch(1024)
                      .cache()  # Cache to memory to alleviate CPU bottlenecks
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(256)
+                    .batch(1024)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 

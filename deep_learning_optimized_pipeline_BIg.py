@@ -9,8 +9,6 @@ from sklearn.preprocessing import StandardScaler
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
         tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
         print(f"Using GPU: {gpus[0]}")
     except RuntimeError as e:
@@ -63,14 +61,14 @@ def dl_function(train, test):
     train_dataset = (train_dataset
                      .shuffle(buffer_size=10000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(256)
+                     .batch(1024)
                      .cache()  # Cache to memory to alleviate CPU bottlenecks
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(256)
+                    .batch(1024)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 
@@ -101,7 +99,7 @@ def dl_function(train, test):
 #home = r'E:\BigRun'
 train_file = '/mnt/e/BigRun/BigRunWS_V5_T_500_train_main.csv'
 test_file = '/mnt/e/BigRun/BigRunWS_V5_T_500_test_main.csv'
-
+n = 6
 train_data_full = pd.read_csv(train_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp'], engine='pyarrow')
 test_data_full = pd.read_csv(test_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp', 'AHRR'], engine='pyarrow')
 ahrr = test_data_full['AHRR']
@@ -115,16 +113,18 @@ test_data = test_data_full[['Clay', 'Sand', 'Silt', 'Elevation', 'Aspect', 'Slop
 test_data['Date'] = pd.to_datetime(test_data['Date'], format="%Y-%m-%d").astype(int)
 train_data['Date'] = pd.to_datetime(train_data['Date'], format="%Y-%m-%d").astype(int)
 
-test_list = divide_dataframe(test_data, 8)
-train_list = divide_dataframe(train_data, 8)
+test_list = divide_dataframe(test_data, n)
+train_list = divide_dataframe(train_data, n)
 
 del train_data
 
 pred_out = pd.DataFrame(columns=['ML_'])
-for i in range(6):
+for i in range(n):
+    pred_temp = pd.DataFrame(columns=['ML_'])
     j = dl_function(train_list[i], test_list[i])
-    new_row = pd.DataFrame({'ML_': [j]})
-    pred_out = pd.concat([pred_out, new_row], ignore_index=True)
+    j = j.reshape(-1)
+    pred_temp['ML_'] = j
+    pred_out = pd.concat([pred_out, pred_temp], ignore_index=True)
 
 # Save predictions
 test_data['ML_'] = pred_out['ML_']
