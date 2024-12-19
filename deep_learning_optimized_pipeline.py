@@ -5,6 +5,8 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 
+
+major_chunk = str(sys.argv[1])
 # Enable GPU configuration
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -37,14 +39,14 @@ def dl_function(train, test):
     train_dataset = (train_dataset
                      .shuffle(buffer_size=10000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(1024)
+                     .batch(256)
                      .cache()  # Cache to memory to alleviate CPU bottlenecks
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(1024)
+                    .batch(256)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 
@@ -70,8 +72,8 @@ def dl_function(train, test):
 
 # Load or distribute your data here
 #home = r'E:\BigRun'
-train_file = '/mnt/e/BigRun/train/BigRunWS_V5_T_500_train_part_1.csv'
-test_file = '/mnt/e/BigRun/test/BigRunWS_V5_T_500_test_part_1.csv'
+train_file = '/mnt/e/BigRun/train/BigRunWS_V5_T_500_train_part_'+major_chunk+'.csv'
+test_file = '/mnt/e/BigRun/test/BigRunWS_V5_T_500_test_part_'+major_chunk+'.csv'
 
 train_data_full = pd.read_csv(train_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp'], engine='pyarrow')
 test_data_full = pd.read_csv(test_file, usecols=['PageName', 'Clay', 'Sand', 'Silt', 'Elevation', 'Slope', 'Aspect', 'MODIS', 'Smerge', 'Date', 'LAI', 'ALB', 'Temp', 'AHRR'], engine='pyarrow')
@@ -96,4 +98,4 @@ test_data['AHRR'] = ahrr
 test_data['SMERGE'] = smerge
 test_data['Date'] = date
 test_data['PageName'] = pagename
-test_data.to_csv("/mnt/e/BigRun/TFDL_BigRunWS_V5_TS_500.csv", index=False)
+test_data.to_csv("/mnt/e/BigRun/TFDL_BigRunWS_V5_TS_500_part_"+major_chunk+".csv", index=False)

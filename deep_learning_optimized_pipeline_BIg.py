@@ -9,6 +9,8 @@ from sklearn.preprocessing import StandardScaler
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
         tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
         print(f"Using GPU: {gpus[0]}")
     except RuntimeError as e:
@@ -59,16 +61,16 @@ def dl_function(train, test):
 
     train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     train_dataset = (train_dataset
-                     .shuffle(buffer_size=10000)
+                     .shuffle(buffer_size=100000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(1024)
+                     .batch(256)
                      .cache()  # Cache to memory to alleviate CPU bottlenecks
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(1024)
+                    .batch(256)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 
