@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 
-major_chunk = str(1)
+major_chunk = str(3)
 #major_chunk = str(sys.argv[1])
 # Enable GPU configuration
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -39,14 +39,14 @@ def dl_function(train, test):
     train_dataset = (train_dataset
                      .shuffle(buffer_size=10000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(64)
+                     .batch(16)
                      .cache()  # Cache to memory to alleviate CPU bottlenecks
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(64)
+                    .batch(16)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 
@@ -64,7 +64,7 @@ def dl_function(train, test):
 
     # Build and train the model
     model = build_model()
-    model.fit(train_dataset, epochs=60, verbose=2)
+    model.fit(train_dataset, epochs=50, verbose=2)
 
     # Predict on the test dataset
     pred = model.predict(test_dataset)
