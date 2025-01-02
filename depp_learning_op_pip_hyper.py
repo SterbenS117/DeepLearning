@@ -4,9 +4,10 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
-import kerastuner as kt  # Keras Tuner for hyperparameter tuning
+import keras_tuner as kt  # Keras Tuner for hyperparameter tuning
+tf.config.optimizer.set_jit(True)
 
-major_chunk = str(1)
+major_chunk = str(sys.argv[1])#str(1)
 
 # Enable GPU configuration
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -19,10 +20,11 @@ if gpus:
     except RuntimeError as e:
         print(e)
 
+
 # Define model builder function for Keras Tuner
 def build_model(hp):
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.InputLayer(input_shape=(11,)))  # Fixed input shape
+    model.add(tf.keras.layers.InputLayer(shape=(11,)))  # Fixed input shape
 
     # Add hidden layers with hyperparameters
     for i in range(hp.Int('num_layers', 1, 5)):
@@ -63,14 +65,14 @@ def dl_function(train, test):
     train_dataset = (train_dataset
                      .shuffle(buffer_size=10000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(64)
+                     .batch(256)
                      .cache()
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(64)
+                    .batch(256)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 
@@ -89,7 +91,7 @@ def dl_function(train, test):
     # Retrieve the best model
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
     model = tuner.hypermodel.build(best_hps)
-    model.fit(train_dataset, epochs=50, verbose=2)
+    model.fit(train_dataset, epochs=100, verbose=2)
 
     # Predict on the test dataset
     pred = model.predict(test_dataset)
