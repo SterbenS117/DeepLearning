@@ -1,15 +1,29 @@
 import os
 import sys
+import math
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 import keras_tuner as kt  # Keras Tuner for hyperparameter tuning
-tf.config.optimizer.set_jit(True)
+tf.config.optimizer.set_jit(False)
 
-major_chunk = str(sys.argv[1])#str(1)
+# cpus = tf.config.experimental.list_physical_devices('CPU')
+# tf.config.experimental.set_visible_devices(cpus[0], 'CPU')
+#
+# os.environ["OMP_NUM_THREADS"] = "56"
+# os.environ["TF_NUM_INTEROP_THREADS"] = "56"
+# os.environ["TF_NUM_INTRAOP_THREADS"] = "56"
+#
+# tf.config.threading.set_intra_op_parallelism_threads(16)
+# tf.config.threading.set_inter_op_parallelism_threads(16)
+#
+# print("Intra-op threads:", tf.config.threading.get_intra_op_parallelism_threads())
 
-# Enable GPU configuration
+
+major_chunk = str(2)
+
+#Enable GPU configuration
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
@@ -62,17 +76,25 @@ def dl_function(train, test):
         return features, labels
 
     train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
-    train_dataset = (train_dataset
+    n = len(train_dataset)
+    top_90 = math.floor(0.9 * n)
+
+    train_dataset_val = (train_dataset.skip(top_90)
+                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
+                     .batch(128)
+                     .cache()
+                     .prefetch(tf.data.AUTOTUNE))
+    train_dataset = (train_dataset.take(top_90)
                      .shuffle(buffer_size=10000)
                      .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                     .batch(256)
+                     .batch(128)
                      .cache()
                      .prefetch(tf.data.AUTOTUNE))
 
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
     test_dataset = (test_dataset
                     .map(preprocess_data, num_parallel_calls=tf.data.AUTOTUNE)
-                    .batch(256)
+                    .batch(128)
                     .cache()
                     .prefetch(tf.data.AUTOTUNE))
 
@@ -80,13 +102,13 @@ def dl_function(train, test):
     tuner = kt.RandomSearch(
         build_model,
         objective='val_mae',
-        max_trials=10,  # Number of hyperparameter combinations to try
+        max_trials=25,  # Number of hyperparameter combinations to try
         executions_per_trial=1,
-        directory='hyperparameter_tuning',
+        directory='hyperparameter_tuning_'+major_chunk,
         project_name='dl_pipeline_tuning'
     )
 
-    tuner.search(train_dataset, epochs=10, validation_data=test_dataset, verbose=2)
+    tuner.search(train_dataset, epochs=12, validation_data=train_dataset_val, verbose=2)
 
     # Retrieve the best model
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
@@ -98,6 +120,8 @@ def dl_function(train, test):
     return pred
 
 # Load or distribute your data here
+# train_file = '/mnt/e/BigRun/train/BigRunWS_V5_T_500_train_part_'+major_chunk+'.csv'
+# test_file = '/mnt/e/BigRun/test/BigRunWS_V5_T_500_test_part_'+major_chunk+'.csv'
 train_file = '/mnt/e/BigRun/train/BigRunWS_V5_T_500_train_part_'+major_chunk+'.csv'
 test_file = '/mnt/e/BigRun/test/BigRunWS_V5_T_500_test_part_'+major_chunk+'.csv'
 
