@@ -21,7 +21,7 @@ tf.config.optimizer.set_jit(False)
 # print("Intra-op threads:", tf.config.threading.get_intra_op_parallelism_threads())
 
 
-major_chunk = str(2)
+major_chunk = str(4)
 
 #Enable GPU configuration
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -113,7 +113,7 @@ def dl_function(train, test):
     # Retrieve the best model
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
     model = tuner.hypermodel.build(best_hps)
-    model.fit(train_dataset, epochs=100, verbose=2)
+    model.fit(train_dataset, epochs=45, verbose=2)
 
     # Predict on the test dataset
     pred = model.predict(test_dataset)
